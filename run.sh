@@ -9,7 +9,7 @@ docker run --runtime nvidia \
     -it --rm \
     --network host \
     --name dli-nano-jp6 \
-    --volume "${SCRIPT_DIR}/data:/workspace/data" \
+    --volume "${SCRIPT_DIR}/data:/nvdli-nano/data" \
     --volume /tmp/argus_socket:/tmp/argus_socket \
     --device /dev/video0 \
     -e JUPYTER_PASSWORD=dlinano \
