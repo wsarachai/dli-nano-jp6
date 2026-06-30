@@ -15,6 +15,11 @@ echo "  JupyterLab → http://${HOST_IP}:8888"
 echo "  Password   → ${JUPYTER_PASSWORD}"
 echo ""
 
+# Expose the data volume inside the Jupyter workspace
+# /workspace/data exists as a real directory in the base image — remove it first
+rm -rf /workspace/data
+ln -sfn /nvdli-nano/data /workspace/data
+
 exec jupyter lab \
     --ip=0.0.0.0 \
     --port=8888 \
