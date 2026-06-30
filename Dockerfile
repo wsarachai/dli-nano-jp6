@@ -51,9 +51,9 @@ COPY jetcam/ /opt/jetcam/
 RUN pip install --no-cache-dir -e /opt/jetcam/
 
 # ── jupyter_clickable_image_widget ───────────────────────────────────────────
+# Rewritten with anywidget — no npm/webpack needed, works with JupyterLab 4
 COPY jupyter_clickable_image_widget/ /opt/jupyter_clickable_image_widget/
-RUN pip install --no-cache-dir -e /opt/jupyter_clickable_image_widget/ && \
-    jupyter nbextension enable --py --sys-prefix jupyter_clickable_image_widget 2>/dev/null || true
+RUN pip install --no-cache-dir -e /opt/jupyter_clickable_image_widget/
 
 # ── Course notebooks ─────────────────────────────────────────────────────────
 WORKDIR /workspace

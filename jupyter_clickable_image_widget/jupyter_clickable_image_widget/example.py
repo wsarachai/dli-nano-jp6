@@ -1,31 +1,67 @@
-import ipywidgets as widgets
-from traitlets import Unicode
+import anywidget
+import traitlets
 
-# See js/lib/example.js for the frontend counterpart to this file.
 
-@widgets.register
-class ClickableImageWidget(widgets.Image):
-    """An example widget."""
+class ClickableImageWidget(anywidget.AnyWidget):
+    """
+    Live image widget that forwards click coordinates to Python.
 
-    # Name of the widget view class in front-end
-    _view_name = Unicode('ClickableImageView').tag(sync=True)
+    JupyterLab 4 compatible — built on anywidget (no npm/webpack required).
 
-    # Name of the widget model class in front-end
-    _model_name = Unicode('ClickableImageModel').tag(sync=True)
+    API-compatible with the original jupyter_clickable_image_widget:
+      - Set `value` to JPEG bytes (use traitlets.dlink + bgr8_to_jpeg)
+      - Register a click handler via on_msg(callback)
+      - Callback receives: content = {
+            'event': 'click',
+            'eventData': {'offsetX': <px>, 'offsetY': <px>}
+        }
+    """
 
-    # Name of the front-end module containing widget view
-    _view_module = Unicode('jupyter_clickable_image_widget').tag(sync=True)
+    _esm = """
+function render({ model, el }) {
+    const img = document.createElement("img");
+    img.style.cssText = "cursor:crosshair;display:block;";
 
-    # Name of the front-end module containing widget model
-    _model_module = Unicode('jupyter_clickable_image_widget').tag(sync=True)
+    function update() {
+        const buf = model.get("value");
+        if (!buf || buf.byteLength === 0) return;
+        const blob = new Blob([buf], { type: "image/jpeg" });
+        const prev = img.src;
+        img.src = URL.createObjectURL(blob);
+        img.onload = () => { if (prev) URL.revokeObjectURL(prev); };
+    }
 
-    # Version of the front-end module containing widget view
-    _view_module_version = Unicode('^0.1.0').tag(sync=True)
-    # Version of the front-end module containing widget model
-    _model_module_version = Unicode('^0.1.0').tag(sync=True)
+    function resize() {
+        img.width  = model.get("width");
+        img.height = model.get("height");
+    }
 
-    # Widget specific property.
-    # Widget properties are defined as traitlets. Any property tagged with `sync=True`
-    # is automatically synced to the frontend *any* time it changes in Python.
-    # It is synced back to Python from the frontend *any* time the model is touched.
-#     value = Unicode('Hello World!').tag(sync=True)
+    model.on("change:value",  update);
+    model.on("change:width",  resize);
+    model.on("change:height", resize);
+
+    img.addEventListener("click", (e) => {
+        const rect = img.getBoundingClientRect();
+        const sx = (img.naturalWidth  || model.get("width"))  / rect.width;
+        const sy = (img.naturalHeight || model.get("height")) / rect.height;
+        model.send({
+            event: "click",
+            eventData: {
+                offsetX: Math.round((e.clientX - rect.left) * sx),
+                offsetY: Math.round((e.clientY - rect.top)  * sy),
+            },
+        });
+    });
+
+    resize();
+    update();
+    el.appendChild(img);
+
+    return () => { if (img.src) URL.revokeObjectURL(img.src); };
+}
+export default { render };
+"""
+
+    value  = traitlets.Bytes(b"").tag(sync=True)
+    width  = traitlets.Int(224).tag(sync=True)
+    height = traitlets.Int(224).tag(sync=True)
