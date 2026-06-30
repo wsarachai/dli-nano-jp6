@@ -10,6 +10,7 @@ docker run --runtime nvidia \
     --network host \
     --name dli-nano-jp6 \
     --volume "${SCRIPT_DIR}/data:/nvdli-nano/data" \
+    --volume "${SCRIPT_DIR}/torch-cache:/root/.cache/torch" \
     --volume /tmp/argus_socket:/tmp/argus_socket \
     --device /dev/video0 \
     -e JUPYTER_PASSWORD=dlinano \
