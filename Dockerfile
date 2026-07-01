@@ -37,13 +37,16 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # ── Core Python packages ─────────────────────────────────────────────────────
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r /tmp/requirements.txt
 
 # ── PyTorch for Jetson JetPack 6 (CUDA 12.6) ────────────────────────────────
 # Wheels from the Jetson AI Lab project — pre-built for aarch64 + CUDA.
 # Swap the index URL if CUDA version differs (cu124, cu128, etc.)
-RUN pip install --no-cache-dir \
-    --extra-index-url https://pypi.jetson-ai-lab.dev/jp6/cu126 \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install \
+    --retries 20 --timeout 120 \
+    --extra-index-url https://pypi.jetson-ai-lab.io/jp6/cu126 \
     torch torchvision torchaudio
 
 # ── jetcam — camera abstraction library ─────────────────────────────────────
